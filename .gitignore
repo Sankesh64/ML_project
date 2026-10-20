@@ -150,3 +150,6 @@ Thumbs.db
 
 # Generated battery reports
 battery-report.html
+
+# IDE configuration
+.vscode/

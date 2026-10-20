@@ -50,23 +50,28 @@ def run_battery_report():
         print(f"[ERROR] Unexpected error running battery report: {e}")
         return False
 
-def parse_battery_report(file_path="battery-report.html"):
-    """Parses the generated UTF-8/UTF-8-SIG battery report HTML."""
-    if not os.path.exists(file_path):
-        print(f"[ERROR] {file_path} not found.")
-        return None
-    
-    try:
-        with open(file_path, "r", encoding="utf-8-sig", errors="ignore") as f:
-            html = f.read()
-    except Exception as e:
-        # Fallback to standard utf-8
+def parse_battery_report(source="battery-report.html"):
+    """Parses the generated UTF-8/UTF-8-SIG battery report HTML from a file path, file-like object, or raw HTML string."""
+    html = ""
+    if hasattr(source, "read"):
+        content = source.read()
+        html = content.decode("utf-8-sig", errors="ignore") if isinstance(content, bytes) else str(content)
+    elif isinstance(source, str) and ("<html" in source.lower() or "<!doctype" in source.lower()):
+        html = source
+    elif isinstance(source, str) and os.path.exists(source):
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(source, "r", encoding="utf-8-sig", errors="ignore") as f:
                 html = f.read()
-        except Exception as e:
-            print(f"[ERROR] Reading {file_path}: {e}")
-            return None
+        except Exception:
+            try:
+                with open(source, "r", encoding="utf-8", errors="ignore") as f:
+                    html = f.read()
+            except Exception as e:
+                print(f"[ERROR] Reading {source}: {e}")
+                return None
+    else:
+        print(f"[ERROR] Invalid battery report source: {source}")
+        return None
 
     def extract_label_val(label):
         pattern = rf'<td><span class="label">{label}</span></td><td>([^<]+)'
